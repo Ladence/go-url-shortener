@@ -11,10 +11,10 @@ type Resolver struct {
 	urlStorage storage.KvStorage
 }
 
-func NewResolver(kvStorage storage.KvStorage) (*Resolver, error) {
+func NewResolver(kvStorage storage.KvStorage) *Resolver {
 	return &Resolver{
 		urlStorage: kvStorage,
-	}, nil
+	}
 }
 
 func (r *Resolver) Resolve(shortUrl string) (string, error) {

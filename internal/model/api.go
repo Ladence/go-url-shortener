@@ -3,9 +3,9 @@ package model
 import "time"
 
 type GetShortenRequest struct {
-	Url         string        `json:"url"`
-	CustomShort string        `json:"short"`
-	Expiry      time.Duration `json:"expiry"`
+	Url         string         `json:"url"`
+	CustomShort string         `json:"short"`
+	Expiry      *time.Duration `json:"expiry,omitempty"`
 }
 
 type GetShortenResponse struct {

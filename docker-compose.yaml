@@ -1,13 +1,11 @@
-version: 3.0
+version: "3.0"
 services:
   redis:
     image: bitnami/redis:latest
     volumes:
-      - "persistent/:/bitnami/redis/data"
+      - './persistent/:/bitnami/redis/data'
     environment:
-      - REDIS_PORT_NUMBER=7000
+      - REDIS_PORT_NUMBER=7005
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
-      - "7000:7000"
-    networks:
-      - host
+      - "7005:7005"

@@ -13,14 +13,14 @@ type Shortener struct {
 	urlStorage storage.KvStorage
 }
 
-func NewShortener(kvStorage storage.KvStorage) (*Shortener, error) {
+func NewShortener(kvStorage storage.KvStorage) *Shortener {
 	return &Shortener{
 		urlStorage: kvStorage,
-	}, nil
+	}
 }
 
 // ShortenUrl process incoming url, writes to a key-value storage (for cache) and return a new one shorten url (if custom-not-provided)
-func (s *Shortener) ShortenUrl(url, customShortUrl string, expiry *time.Duration) (string, error) {
+func (s *Shortener) ShortenUrl(url, customShortUrl string, expiry time.Duration) (string, error) {
 	if !govalidator.IsURL(url) {
 		return "", fmt.Errorf("provided url in request is not a url")
 	}
@@ -37,12 +37,7 @@ func (s *Shortener) ShortenUrl(url, customShortUrl string, expiry *time.Duration
 		return "", fmt.Errorf("URL custom short is already in use")
 	}
 
-	expiryStorage := time.Hour * 24
-	if expiry != nil {
-		expiryStorage = *expiry
-	}
-
-	err = s.urlStorage.Push(context.Background(), id, url, expiryStorage)
+	err = s.urlStorage.Push(context.Background(), id, url, expiry)
 	if err != nil {
 		return "", fmt.Errorf("error on push shortened url in kvstorage: %v", err)
 	}
