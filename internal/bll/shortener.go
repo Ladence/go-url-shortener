@@ -25,7 +25,7 @@ func (s *Shortener) ShortenUrl(request *model.GetShortenRequest) (*model.GetShor
 	}
 
 	id := request.CustomShort
-	if len(request.CustomShort) == 0 {
+	if len(id) == 0 {
 		id = EncodeBase62(rand.Uint64())
 	}
 	val, err := s.urlStorage.Get(context.Background(), id)
