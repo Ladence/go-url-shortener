@@ -1,6 +1,11 @@
 package storage
 
+import (
+	"context"
+	"time"
+)
+
 type KvStorage interface {
-	Push(key string, value any) error
-	Get(key string) (any, error)
+	Push(ctx context.Context, key string, value any, duration time.Duration) error
+	Get(ctx context.Context, key string) (any, error)
 }
