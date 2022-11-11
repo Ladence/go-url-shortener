@@ -34,6 +34,9 @@ func (r *RedisStorage) Push(ctx context.Context, key string, value any, duration
 func (r *RedisStorage) Get(ctx context.Context, key string) (any, error) {
 	res := r.redisClient.Get(ctx, key)
 	if res.Err() != nil {
+		if res.Err() == redis.Nil {
+			return nil, fmt.Errorf("key is not found")
+		}
 		return nil, res.Err()
 	}
 	return res.String(), nil

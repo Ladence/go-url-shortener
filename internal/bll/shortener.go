@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Ladence/go-url-shortener/internal/model"
 	"github.com/Ladence/go-url-shortener/internal/storage"
+	"github.com/asaskevich/govalidator"
 	"math/rand"
 )
 
@@ -19,11 +20,14 @@ func NewShortener(kvStorage storage.KvStorage) (*Shortener, error) {
 }
 
 func (s *Shortener) ShortenUrl(request *model.GetShortenRequest) (*model.GetShortenResponse, error) {
+	if !govalidator.IsURL(request.Url) {
+		return nil, fmt.Errorf("provided url in request is not a url")
+	}
+
 	id := request.CustomShort
 	if len(request.CustomShort) == 0 {
 		id = EncodeBase62(rand.Uint64())
 	}
-
 	val, err := s.urlStorage.Get(context.Background(), id)
 	if err != nil {
 		return nil, fmt.Errorf("error on get value by id from kvstorage: %v", err)
