@@ -11,7 +11,7 @@ type GetShortenRequest struct {
 type GetShortenResponse struct {
 	Url             string        `json:"url"`
 	CustomShort     string        `json:"customShort"`
-	Expiry          string        `json:"expiry"`
+	Expiry          time.Duration `json:"expiry"`
 	XRateLimitReset time.Duration `json:"rate_limit_reset"`
 	XRateRemaining  int           `json:"rate_limit"`
 }
