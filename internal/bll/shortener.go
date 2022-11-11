@@ -3,10 +3,10 @@ package bll
 import (
 	"context"
 	"fmt"
-	"github.com/Ladence/go-url-shortener/internal/model"
 	"github.com/Ladence/go-url-shortener/internal/storage"
 	"github.com/asaskevich/govalidator"
 	"math/rand"
+	"time"
 )
 
 type Shortener struct {
@@ -19,36 +19,33 @@ func NewShortener(kvStorage storage.KvStorage) (*Shortener, error) {
 	}, nil
 }
 
-func (s *Shortener) ShortenUrl(request *model.GetShortenRequest) (*model.GetShortenResponse, error) {
-	if !govalidator.IsURL(request.Url) {
-		return nil, fmt.Errorf("provided url in request is not a url")
+// ShortenUrl process incoming url, writes to a key-value storage (for cache) and return a new one shorten url (if custom-not-provided)
+func (s *Shortener) ShortenUrl(url, customShortUrl string, expiry *time.Duration) (string, error) {
+	if !govalidator.IsURL(url) {
+		return "", fmt.Errorf("provided url in request is not a url")
 	}
 
-	id := request.CustomShort
+	id := customShortUrl
 	if len(id) == 0 {
 		id = EncodeBase62(rand.Uint64())
 	}
 	val, err := s.urlStorage.Get(context.Background(), id)
 	if err != nil {
-		return nil, fmt.Errorf("error on get value by id from kvstorage: %v", err)
+		return "", fmt.Errorf("error on get value by id from kvstorage: %v", err)
 	}
 	if val != nil {
-		return nil, fmt.Errorf("URL custom short is already in use")
-	}
-	if request.Expiry == 0 {
-		request.Expiry = 24
+		return "", fmt.Errorf("URL custom short is already in use")
 	}
 
-	err = s.urlStorage.Push(context.Background(), id, request.Url, request.Expiry)
+	expiryStorage := time.Hour * 24
+	if expiry != nil {
+		expiryStorage = *expiry
+	}
+
+	err = s.urlStorage.Push(context.Background(), id, url, expiryStorage)
 	if err != nil {
-		return nil, fmt.Errorf("error on push shortened url in kvstorage: %v", err)
+		return "", fmt.Errorf("error on push shortened url in kvstorage: %v", err)
 	}
 
-	return &model.GetShortenResponse{
-		Url:             request.Url,
-		CustomShort:     "",
-		Expiry:          request.Expiry,
-		XRateRemaining:  0,
-		XRateLimitReset: 30,
-	}, nil
+	return id, nil
 }
