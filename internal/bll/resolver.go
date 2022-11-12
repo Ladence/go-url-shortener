@@ -22,5 +22,8 @@ func (r *Resolver) Resolve(shortUrl string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to get key from kvstorage: %v", err)
 	}
+	if value == nil {
+		return "", fmt.Errorf("unable to find value for key = %s in kvstorage", shortUrl)
+	}
 	return value.(string), nil
 }
