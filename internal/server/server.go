@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const API_QUOTA = 10 // calls quota for clients
+const ApiQuota = 10 // calls quota for clients
 
 type Server struct {
 	shortener  *bll.Shortener
@@ -85,7 +85,7 @@ func (s *Server) handleShorten(w http.ResponseWriter, r *http.Request) {
 	clientIp := getIpFromRequest(r)
 	clientRate, err := s.ipStorage.Get(context.Background(), clientIp)
 	if clientRate == nil {
-		_ = s.ipStorage.Push(context.Background(), clientIp, API_QUOTA, time.Minute*30)
+		_ = s.ipStorage.Push(context.Background(), clientIp, ApiQuota, time.Minute*30)
 	} else if err == nil {
 		valInt, _ := strconv.Atoi(clientRate.(string))
 		if valInt <= 0 {
