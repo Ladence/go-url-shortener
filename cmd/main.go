@@ -20,9 +20,9 @@ func main() {
 		fmt.Printf("error on initializing urlStorage: %v", err)
 		return
 	}
-	fmt.Println("Storages are ready, going to start server")
+	fmt.Println("storages are ready, going to start server")
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGKILL)
+	signal.Notify(sigChan, syscall.SIGKILL, syscall.SIGINT)
 	appServer := server.NewServer("127.0.0.1:7002", urlStorage, ipStorage)
 	go appServer.Run()
 	sig := <-sigChan
