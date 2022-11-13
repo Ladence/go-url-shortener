@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Ladence/go-url-shortener/internal/bll"
 	"github.com/Ladence/go-url-shortener/internal/model"
 	"github.com/Ladence/go-url-shortener/internal/storage"
@@ -16,14 +17,16 @@ type Server struct {
 	shortener  *bll.Shortener
 	resolver   *bll.Resolver
 	ipStorage  storage.KvStorage
+	urlStorage storage.KvStorage
 	httpServer http.Server
 }
 
 func NewServer(address string, urlStorage, ipStorage storage.KvStorage) *Server {
 	server := &Server{
-		shortener: bll.NewShortener(urlStorage),
-		resolver:  bll.NewResolver(urlStorage),
-		ipStorage: ipStorage,
+		shortener:  bll.NewShortener(urlStorage),
+		resolver:   bll.NewResolver(urlStorage),
+		ipStorage:  ipStorage,
+		urlStorage: urlStorage,
 	}
 
 	server.initHttpServer(address)
@@ -32,6 +35,17 @@ func NewServer(address string, urlStorage, ipStorage storage.KvStorage) *Server 
 
 func (s *Server) Run() {
 	_ = s.httpServer.ListenAndServe()
+}
+
+func (s *Server) Shutdown() error {
+	err := s.urlStorage.Close()
+	if err != nil {
+		return fmt.Errorf("error on closing urlStorage: %v", err)
+	}
+	if err = s.ipStorage.Close(); err != nil {
+		return fmt.Errorf("error on closing ipStorage: %v", err)
+	}
+	return nil
 }
 
 func (s *Server) initHttpServer(address string) {

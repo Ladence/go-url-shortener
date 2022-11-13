@@ -41,3 +41,7 @@ func (r *RedisStorage) Get(ctx context.Context, key string) (any, error) {
 	}
 	return res.String(), nil
 }
+
+func (r *RedisStorage) Close() error {
+	return r.redisClient.Close()
+}
