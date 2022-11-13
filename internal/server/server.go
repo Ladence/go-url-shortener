@@ -54,8 +54,8 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) initHttpServer(address string) {
 	r := mux.NewRouter()
-	r.HandleFunc("/shorten", s.handleShorten).Methods(http.MethodPost)
-	r.HandleFunc("/resolve", s.handleResolve).Methods(http.MethodGet)
+	r.Handle("/shorten", commonMiddleware(s.handleShorten)).Methods(http.MethodPost)
+	r.Handle("/resolve", commonMiddleware(s.handleResolve)).Methods(http.MethodGet)
 
 	s.httpServer = http.Server{
 		Addr:    address,
@@ -130,6 +130,13 @@ func (s *Server) handleResolve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+func commonMiddleware(next http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		next.ServeHTTP(writer, request)
+	})
 }
 
 func getIpFromRequest(r *http.Request) (ipAddr string) {
