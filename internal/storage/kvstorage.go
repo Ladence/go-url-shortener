@@ -10,5 +10,6 @@ type KvStorage interface {
 	Get(ctx context.Context, key string) (any, error)
 	Incr(ctx context.Context, key string) (any, error)
 	Decr(ctx context.Context, key string) (any, error)
+	TTL(ctx context.Context, key string) (time.Duration, error)
 	Close() error
 }

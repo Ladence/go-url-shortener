@@ -100,12 +100,13 @@ func (s *Server) handleShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	rateLimitReset, _ := s.ipStorage.TTL(context.Background(), clientIp)
 	remainingQuota, _ := s.ipStorage.Decr(context.Background(), clientIp)
 	response := model.PostShortenResponse{
 		Url:             req.Url,
 		CustomShort:     shortenUrl,
 		Expiry:          expiryStorage,
-		XRateLimitReset: 30, // todo: care about quota, need to receive a TTL
+		XRateLimitReset: rateLimitReset,
 		XRateRemaining:  remainingQuota.(int64),
 	}
 	jsonResponse, err := json.Marshal(response)

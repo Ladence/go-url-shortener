@@ -12,6 +12,10 @@ type RedisStorage struct {
 	redisClient *redis.Client
 }
 
+func (r *RedisStorage) TTL(ctx context.Context, key string) (time.Duration, error) {
+	return r.redisClient.TTL(ctx, key).Result()
+}
+
 func (r *RedisStorage) Incr(ctx context.Context, key string) (any, error) {
 	return r.redisClient.Incr(ctx, key).Result()
 }
