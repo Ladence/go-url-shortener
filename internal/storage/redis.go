@@ -12,6 +12,14 @@ type RedisStorage struct {
 	redisClient *redis.Client
 }
 
+func (r *RedisStorage) Incr(ctx context.Context, key string) (any, error) {
+	return r.redisClient.Incr(ctx, key).Result()
+}
+
+func (r *RedisStorage) Decr(ctx context.Context, key string) (any, error) {
+	return r.redisClient.Decr(ctx, key).Result()
+}
+
 func NewRedisStorage(address string, password string, dbNumber int) (KvStorage, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     address,
@@ -39,7 +47,7 @@ func (r *RedisStorage) Get(ctx context.Context, key string) (any, error) {
 		}
 		return nil, res.Err()
 	}
-	return res.String(), nil
+	return res.Val(), nil
 }
 
 func (r *RedisStorage) Close() error {

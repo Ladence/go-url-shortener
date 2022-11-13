@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Ladence/go-url-shortener/internal/bll"
@@ -10,8 +11,11 @@ import (
 	_ "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 )
+
+const API_QUOTA = 10 // calls quota for clients
 
 type Server struct {
 	shortener  *bll.Shortener
@@ -66,30 +70,43 @@ func (s *Server) handleShorten(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	req := &model.GetShortenRequest{}
+	req := &model.PostShortenRequest{}
 	err = json.Unmarshal(bytes, req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	expiryStorage := time.Hour * 24
 	if req.Expiry != nil {
 		expiryStorage = *req.Expiry
 	}
 
+	// rate limiting
+	clientIp := getIpFromRequest(r)
+	clientRate, err := s.ipStorage.Get(context.Background(), clientIp)
+	if clientRate == nil {
+		_ = s.ipStorage.Push(context.Background(), clientIp, API_QUOTA, time.Minute*30)
+	} else if err == nil {
+		valInt, _ := strconv.Atoi(clientRate.(string))
+		if valInt <= 0 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+	}
+
 	shortenUrl, err := s.shortener.ShortenUrl(req.Url, req.CustomShort, expiryStorage)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusAlreadyReported)
 		return
 	}
 
-	response := model.GetShortenResponse{
+	remainingQuota, _ := s.ipStorage.Decr(context.Background(), clientIp)
+	response := model.PostShortenResponse{
 		Url:             req.Url,
 		CustomShort:     shortenUrl,
 		Expiry:          expiryStorage,
-		XRateLimitReset: 30, // todo: care about quota
-		XRateRemaining:  20,
+		XRateLimitReset: 30, // todo: care about quota, need to receive a TTL
+		XRateRemaining:  remainingQuota.(int64),
 	}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
@@ -112,4 +129,17 @@ func (s *Server) handleResolve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+func getIpFromRequest(r *http.Request) (ipAddr string) {
+	ipAddr = r.Header.Get("X-Real-Ip")
+	if len(ipAddr) != 0 {
+		return
+	}
+	ipAddr = r.Header.Get("X-Forwarded-For")
+	if len(ipAddr) != 0 {
+		return
+	}
+	ipAddr = r.RemoteAddr
+	return
 }

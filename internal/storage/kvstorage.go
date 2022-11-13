@@ -8,5 +8,7 @@ import (
 type KvStorage interface {
 	Push(ctx context.Context, key string, value any, duration time.Duration) error
 	Get(ctx context.Context, key string) (any, error)
+	Incr(ctx context.Context, key string) (any, error)
+	Decr(ctx context.Context, key string) (any, error)
 	Close() error
 }
