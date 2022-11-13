@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"github.com/Ladence/go-url-shortener/internal/server"
 	"github.com/Ladence/go-url-shortener/internal/storage"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -18,6 +21,14 @@ func main() {
 		return
 	}
 	fmt.Println("Storages are ready, going to start server")
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGKILL)
 	appServer := server.NewServer("127.0.0.1:7002", urlStorage, ipStorage)
-	appServer.Run()
+	go appServer.Run()
+	sig := <-sigChan
+	fmt.Printf("got signal: %s. closing an application server", sig.String())
+	err = appServer.Shutdown()
+	if err != nil {
+		fmt.Printf("error on shutdown application server: %v", err)
+	}
 }
