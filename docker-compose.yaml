@@ -9,3 +9,9 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "7005:7005"
+  app:
+    build: .
+    depends_on:
+      - redis
+    ports:
+      - "7002:7002"
