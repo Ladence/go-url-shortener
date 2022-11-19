@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -42,11 +41,11 @@ func (m *Map) Push(ctx context.Context, key string, val any, duration time.Durat
 }
 
 func (m *Map) Get(ctx context.Context, key string) (any, error) {
-	v, err := m.getInternalValue(key)
-	if err != nil {
-		return nil, err
+	v := m.getInternalValue(key)
+	if v == nil {
+		return nil, nil
 	}
-	return v.val, err
+	return v.val, nil
 }
 
 func (m *Map) Incr(ctx context.Context, key string) (any, error) {
@@ -58,11 +57,11 @@ func (m *Map) Decr(ctx context.Context, key string) (any, error) {
 }
 
 func (m *Map) TTL(ctx context.Context, key string) (time.Duration, error) {
-	v, err := m.getInternalValue(key)
-	if err != nil {
-		return 0, err
+	v := m.getInternalValue(key)
+	if v == nil {
+		return 0, nil
 	}
-	return v.ttl, err
+	return v.ttl, nil
 }
 
 func (m *Map) Close() error {
@@ -72,12 +71,12 @@ func (m *Map) Close() error {
 	return nil
 }
 
-func (m *Map) getInternalValue(key string) (*value, error) {
+func (m *Map) getInternalValue(key string) *value {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
 	val, ok := m.m[key]
 	if !ok {
-		return nil, fmt.Errorf("key: %s hasn't been found in a map", key)
+		return nil
 	}
-	return &val, nil
+	return &val
 }
